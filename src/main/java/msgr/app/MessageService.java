@@ -16,4 +16,8 @@ public class MessageService {
 	public List<Message> getMessages() {
 		return messages;
 	}
+	
+	public Message getMessage(String byAuthor) {
+		return messages.stream().filter(t -> t.getAuthor().equals(byAuthor)).findFirst().get();
+	}
 }
