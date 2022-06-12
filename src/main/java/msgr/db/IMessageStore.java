@@ -24,5 +24,5 @@ public interface IMessageStore {
 
 	public Message updateMessageBy(String author, Message msg);
 
-	public boolean deleteMessagesBy(String author);
+	public void deleteMessagesBy(String author);
 }

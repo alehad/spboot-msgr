@@ -39,14 +39,31 @@ public class MessengerAppController {
 		return messageStoreService.getStore().getMessages();
 	}
 
-	@RequestMapping("/messages/by/{byAuthor}")
-	public List<Message> getMessagesBy(@PathVariable String byAuthor) {
-		return messageStoreService.getStore().getMessagesBy(byAuthor);
-	}
-
 	@RequestMapping(method=RequestMethod.POST, value="/messages")
 	public Message postMessage(@RequestBody Message msg) {
 		return messageStoreService.getStore().createMessage(msg);
+	}
+
+	// byId
+	@RequestMapping("/messages/{msgId}")
+	public Message getMessage(@PathVariable int msgId) {
+		return messageStoreService.getStore().getMessage(msgId);
+	}
+
+	@RequestMapping(method=RequestMethod.PUT, value="/messages/{msgId}")
+	public Message updateMessage(@RequestBody Message newMsg, @PathVariable int msgId) {
+		return messageStoreService.getStore().updateMessage(msgId, newMsg);
+	}
+
+	@RequestMapping(method=RequestMethod.DELETE, value="/messages/{msgId}")
+	public void deleteMessage(@PathVariable int msgId) {
+		messageStoreService.getStore().deleteMessage(msgId);
+	}
+
+	// byAuthor
+	@RequestMapping("/messages/by/{byAuthor}")
+	public List<Message> getMessagesBy(@PathVariable String byAuthor) {
+		return messageStoreService.getStore().getMessagesBy(byAuthor);
 	}
 
 	@RequestMapping(method=RequestMethod.PUT, value="/messages/by/{byAuthor}")
@@ -55,7 +72,7 @@ public class MessengerAppController {
 	}
 
 	@RequestMapping(method=RequestMethod.DELETE, value="/messages/by/{byAuthor}")
-	public boolean deleteMessagesBy(@PathVariable String byAuthor) {
-		return messageStoreService.getStore().deleteMessagesBy(byAuthor);
+	public void deleteMessagesBy(@PathVariable String byAuthor) {
+		messageStoreService.getStore().deleteMessagesBy(byAuthor);
 	}
 }

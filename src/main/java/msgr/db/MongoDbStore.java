@@ -137,29 +137,32 @@ public class MongoDbStore implements IMessageStore {
 	@Override
 	public void deleteMessage(int id) {
 		Bson filter = eq(_msgId, id);
-		try {
-			mongodbCollection.deleteOne(filter);		
-		}
-		finally {
-		}
+		mongodbCollection.deleteOne(filter);		
 	}
 
 	@Override
 	public List<Message> getMessagesBy(String author) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Message> result = new ArrayList<Message>();
+		Bson filter = eq(_auth, author);
+		List<Document> docs = mongodbCollection.find(filter).into(new ArrayList<>());	
+		for (Document doc : docs) {
+			result.add(new StoredMessage(doc.getInteger(_msgId), doc.getString(_msg), doc.getString(_auth)));
+		}
+		return result;
 	}
 
 	@Override
 	public Message updateMessageBy(String author, Message msg) {
-		// TODO Auto-generated method stub
-		return null;
+		// this will update the first message found
+		Bson filter = eq(_auth, author);
+		Document doc = mongodbCollection.find(filter).first();
+		return doc != null ? updateMessage(doc.getInteger(_msgId), msg) : null;
 	}
 
 	@Override
-	public boolean deleteMessagesBy(String author) {
-		// TODO Auto-generated method stub
-		return true;
+	public void deleteMessagesBy(String author) {
+		Bson filter = eq(_auth, author);
+		mongodbCollection.deleteMany(filter);		
 	}
 	
 }
