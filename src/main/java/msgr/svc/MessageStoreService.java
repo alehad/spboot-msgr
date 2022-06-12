@@ -1,20 +1,24 @@
 package msgr.svc;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.beans.factory.annotation.Qualifier;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import msgr.db.IMessageStore;
-import msgr.db.SimpleDbStore;
 
 @Service
 public class MessageStoreService {
 
-	//@Autowired
-	//@Qualifier("simpleDbStore")
-	IMessageStore messageStore = new SimpleDbStore();
+	@Autowired
+	private List<IMessageStore> registry;
+
+	// if nothing specified, default to mongo
+	@Value( "${msgr.db.store:Mongo}" )
+	private String storeType;
 	
 	public IMessageStore getStore() {
-		return messageStore;
+		return registry.stream().filter(s -> s.getClass().getName().contains(storeType)).findFirst().get();
 	}
 }

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
-//import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Service;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
@@ -24,7 +24,7 @@ import com.mongodb.client.model.UpdateOptions;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.*;
 
-//@Service
+@Service
 public class MongoDbStore implements IMessageStore {
 
 	// for now we will statically initialize mongo db
