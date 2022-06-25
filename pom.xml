@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>alehad.spboot</groupId>
   <artifactId>msgr</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>spboot-1.0</version>
   
   <parent>
     <groupId>org.springframework.boot</groupId>

@@ -9,6 +9,8 @@ import java.util.ArrayList;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.mongodb.client.FindIterable;
@@ -35,8 +37,6 @@ public class MongoDbStore implements IMessageStore {
 	private static MongoCollection<Document> mongodbCollection;
 	
 	//private static String _mongodbHostName = "mongodb";
-	private static String _mongodbHostName = "localhost";
-	private static String _mongodbPort = "27017";
 	private static String _mongodbName = "MessengerDBv2";
 	private static String _mongodbCollectionName = "messages";
 	
@@ -44,12 +44,13 @@ public class MongoDbStore implements IMessageStore {
 	private static String _msg   = "msg";
 	private static String _auth  = "author";
 
-	public MongoDbStore() {
+	@Autowired
+	public MongoDbStore(@Value("${spring.data.mongodb.host:localhost}") String host, @Value("${spring.data.mongodb.port:27017}") String port) {
 		// will need to update host/port once moving to K8
 		// when running inside docker, the host name = name of mongo *service* or
 		// compose.yaml has to have hostname: mongo-db specified for the service: mongo
 		// this will create DNS name of mongo-db for the mongo running inside docker network
-		mongodbClient = MongoClients.create("mongodb://" + _mongodbHostName + ":" + _mongodbPort);
+		mongodbClient = MongoClients.create("mongodb://" + host + ":" + port);
 
 		mongodb = mongodbClient.getDatabase(_mongodbName); // if not present, Mongo will create it
 		// do we need to authenticate?
