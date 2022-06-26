@@ -165,5 +165,10 @@ public class MongoDbStore implements IMessageStore {
 		Bson filter = eq(_auth, author);
 		mongodbCollection.deleteMany(filter);		
 	}
+
+	@Override
+	public void deleteAll() {
+		mongodbCollection.deleteMany(new Document());
+	}
 	
 }

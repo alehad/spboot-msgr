@@ -75,4 +75,9 @@ public class MessengerAppController {
 	public void deleteMessagesBy(@PathVariable String byAuthor) {
 		messageStoreService.getStore().deleteMessagesBy(byAuthor);
 	}
+
+	@RequestMapping(method=RequestMethod.DELETE, value="/messages/all")
+	public void deleteAll() {
+		messageStoreService.getStore().deleteAll();
+	}
 }

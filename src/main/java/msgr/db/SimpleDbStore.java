@@ -63,4 +63,8 @@ public class SimpleDbStore implements IMessageStore {
 		messages.removeIf(t -> t.getAuthor().equals(author));
 	}
 
+	@Override
+	public void deleteAll() {
+		messages.clear();
+	}
 }

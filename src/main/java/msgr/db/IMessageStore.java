@@ -25,4 +25,6 @@ public interface IMessageStore {
 	public Message updateMessageBy(String author, Message msg);
 
 	public void deleteMessagesBy(String author);
+	
+	public void deleteAll();
 }
