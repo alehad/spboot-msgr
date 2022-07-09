@@ -8,15 +8,15 @@ pipeline {
     stages {
         stage('start services') {
             steps {
-                sh 'docker compose -f ./devops/docker/msgr-pipeline-services-compose.yaml up'
-                sh 'docker compose ps'
+                sh 'docker-compose -f ./devops/docker/msgr-pipeline-services-compose.yaml up'
+                sh 'docker ps'
                 sh 'mongo'
             }
         }
     }
     post {
     	always {
-    		sh 'docker compose -f ./devops/docker/msgr-pipeline-services-compose.yaml down'
+    		sh 'docker-compose -f ./devops/docker/msgr-pipeline-services-compose.yaml down'
     	}
     }
 }
