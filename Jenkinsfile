@@ -7,24 +7,13 @@ pipeline {
     }
     stages {
         stage('start services') {
-            agent {
-                docker {
-                    image 'docker/compose' 
-                }
-            }
+            agent { label 'macos' }
             steps {
-                dir('devops/docker') {
-                    sh 'docker compose version'
-                    sh 'docker compose --file ./msgr-pipeline-services-compose.yaml up'
-                    sh 'docker compose ps'
-                    sh 'mongo'
-                }
+            	sh '''
+            		docker --version
+            		docker compose version
+            	'''
             }
         }
-    }
-    post {
-    	always {
-    		sh 'docker-compose -f ./devops/docker/msgr-pipeline-services-compose.yaml down'
-    	}
     }
 }
