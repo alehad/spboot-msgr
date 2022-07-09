@@ -7,7 +7,7 @@ pipeline {
     }
     stages {
         stage('start services') {
-            agent { label 'macos' }
+            agent { label 'master' }
             steps {
             	sh '''
             		docker --version
