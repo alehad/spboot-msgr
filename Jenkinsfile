@@ -14,7 +14,7 @@ pipeline {
             }
             steps {
                 dir('devops/docker') {
-                    sh 'docker compose -version'
+                    sh 'docker compose -v'
                     sh 'docker compose -f msgr-pipeline-services-compose.yaml up'
                     sh 'docker compose ps'
                     sh 'mongo'
