@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('start services') {
             steps {
-                sh 'docker compose -d --no-color --wait -f ./devops/docker/msgr-pipeline-services-compose.yaml up'
+                sh 'docker compose -f ./devops/docker/msgr-pipeline-services-compose.yaml up'
                 sh 'docker compose ps'
                 sh 'mongo'
             }
@@ -16,7 +16,7 @@ pipeline {
     }
     post {
     	always {
-    		sh 'docker compose --remove-orphans -v -f ./devops/docker/msgr-pipeline-services-compose.yaml down'
+    		sh 'docker compose -f ./devops/docker/msgr-pipeline-services-compose.yaml down'
     	}
     }
 }
