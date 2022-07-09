@@ -7,10 +7,18 @@ pipeline {
     }
     stages {
         stage('start services') {
+            agent {
+                docker {
+                    image 'docker/compose' 
+                }
+            }
             steps {
-                sh 'docker-compose -f ./devops/docker/msgr-pipeline-services-compose.yaml up'
-                sh 'docker ps'
-                sh 'mongo'
+                dir('devops/docker') {
+                    sh 'docker compose -version'
+                    sh 'docker compose -f msgr-pipeline-services-compose.yaml up'
+                    sh 'docker compose ps'
+                    sh 'mongo'
+                }
             }
         }
     }
