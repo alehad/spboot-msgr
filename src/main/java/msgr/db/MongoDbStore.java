@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,35 +29,42 @@ import static com.mongodb.client.model.Updates.*;
 @Service
 public class MongoDbStore implements IMessageStore {
 
-	// for now we will statically initialize mongo db
-	// once this gets containerized, we will update the initialization bit
-	
-	private static MongoClient mongodbClient;
-	private static MongoDatabase mongodb;
-	private static MongoCollection<Document> mongodbCollection;
-	
-	//private static String _mongodbHostName = "mongodb";
-	private static String _mongodbName = "MessengerDBv2";
-	private static String _mongodbCollectionName = "messages";
-	
-	private static String _msgId = "msgId";
-	private static String _msg   = "msg";
-	private static String _auth  = "author";
+	private MongoClient _mongodbClient;
+	private MongoDatabase _mongodb;
+	private MongoCollection<Document> _mongodbCollection;
 
-	@Autowired
-	public MongoDbStore(@Value("${spring.data.mongodb.host:localhost}") String host, @Value("${spring.data.mongodb.port:27017}") String port) {
+	@Value("${spring.data.mongodb.host:localhost}")
+	private String _mongodbHost;
+	
+	@Value("${spring.data.mongodb.port:27017}")
+	private String _mongodbPort;
+
+	private final String _mongodbName = "MessengerDBv2";
+	private final String _mongodbCollectionName = "messages";
+	
+	private final String _msgId = "msgId";
+	private final String _msg   = "msg";
+	private final String _auth  = "author";
+
+	@Override
+	public boolean isInitialized() {
+		return _mongodbClient != null && _mongodb != null;
+	}
+
+	@Override
+	public void initialize() {
 		// will need to update host/port once moving to K8
 		// when running inside docker, the host name = name of mongo *service* or
 		// compose.yaml has to have hostname: mongo-db specified for the service: mongo
 		// this will create DNS name of mongo-db for the mongo running inside docker network
-		mongodbClient = MongoClients.create("mongodb://" + host + ":" + port);
+		_mongodbClient = MongoClients.create("mongodb://" + _mongodbHost + ":" + _mongodbPort);
 
-		mongodb = mongodbClient.getDatabase(_mongodbName); // if not present, Mongo will create it
+		_mongodb = _mongodbClient.getDatabase(_mongodbName); // if not present, Mongo will create it
 		// do we need to authenticate?
 		
 		boolean createCollection = true;
 		
-		MongoIterable<String> collections = mongodb.listCollectionNames();
+		MongoIterable<String> collections = _mongodb.listCollectionNames();
 		
 		while (collections.iterator().hasNext() && createCollection) {
 			if (collections.iterator().next().equalsIgnoreCase(_mongodbCollectionName)) {
@@ -66,11 +73,11 @@ public class MongoDbStore implements IMessageStore {
 		}
 
 		if (createCollection) {
-			mongodb.createCollection(_mongodbCollectionName); // create a table -- in Mongo terms that is a Collection
-			mongodbCollection = mongodb.getCollection(_mongodbCollectionName);
+			_mongodb.createCollection(_mongodbCollectionName); // create a table -- in Mongo terms that is a Collection
+			_mongodbCollection = _mongodb.getCollection(_mongodbCollectionName);
 		}
 		else {
-			mongodbCollection = mongodb.getCollection(_mongodbCollectionName);
+			_mongodbCollection = _mongodb.getCollection(_mongodbCollectionName);
 		}
 	}
 	
@@ -79,7 +86,7 @@ public class MongoDbStore implements IMessageStore {
 
 		List<Message> messages = new ArrayList<Message>();
 		
-		FindIterable<Document> iterable = mongodbCollection.find();
+		FindIterable<Document> iterable = _mongodbCollection.find();
 		MongoCursor<Document> cursor = iterable.iterator();
 		
 		while (cursor.hasNext()) {
@@ -98,7 +105,7 @@ public class MongoDbStore implements IMessageStore {
 	@Override
 	public Message getMessage(int id) {
 		Message  msg = null;
-		Document doc = mongodbCollection.find(eq(_msgId, id)).first();
+		Document doc = _mongodbCollection.find(eq(_msgId, id)).first();
 
 		if (doc != null) {
 			msg = new StoredMessage(doc.getInteger(_msgId), doc.getString(_msg), doc.getString(_auth));
@@ -111,12 +118,12 @@ public class MongoDbStore implements IMessageStore {
 	public Message createMessage(Message msg) {
 		// check if message id already exists
 		Document doc = new Document();
-		int msgId = Math.toIntExact(mongodbCollection.countDocuments()) + 1;
+		int msgId = Math.toIntExact(_mongodbCollection.countDocuments()); // + 1;
 		doc.put(_msgId, msgId); // potenital issue with deleted messages in the middle
 		doc.put(_msg, msg.getMessage());
 		doc.put(_auth, msg.getAuthor());
 		try {
-			mongodbCollection.insertOne(doc);
+			_mongodbCollection.insertOne(doc);
 		}
 		finally {
 			// TODO: define exception to throw or how to indicate unsuccessful op 
@@ -131,21 +138,21 @@ public class MongoDbStore implements IMessageStore {
 		Bson updateAuth = set(_auth, msg.getAuthor());
 		Bson update = combine(updateMsg, updateAuth);
 		UpdateOptions options = new UpdateOptions().upsert(true); // this will insert new message if id not found
-		mongodbCollection.updateOne(filter, update, options); // does not throw
+		_mongodbCollection.updateOne(filter, update, options); // does not throw
 		return getMessage(id);
 	}
 
 	@Override
 	public void deleteMessage(int id) {
 		Bson filter = eq(_msgId, id);
-		mongodbCollection.deleteOne(filter);		
+		_mongodbCollection.deleteOne(filter);		
 	}
 
 	@Override
 	public List<Message> getMessagesBy(String author) {
 		List<Message> result = new ArrayList<Message>();
 		Bson filter = eq(_auth, author);
-		List<Document> docs = mongodbCollection.find(filter).into(new ArrayList<>());	
+		List<Document> docs = _mongodbCollection.find(filter).into(new ArrayList<>());	
 		for (Document doc : docs) {
 			result.add(new StoredMessage(doc.getInteger(_msgId), doc.getString(_msg), doc.getString(_auth)));
 		}
@@ -156,19 +163,18 @@ public class MongoDbStore implements IMessageStore {
 	public Message updateMessageBy(String author, Message msg) {
 		// this will update the first message found
 		Bson filter = eq(_auth, author);
-		Document doc = mongodbCollection.find(filter).first();
+		Document doc = _mongodbCollection.find(filter).first();
 		return doc != null ? updateMessage(doc.getInteger(_msgId), msg) : null;
 	}
 
 	@Override
 	public void deleteMessagesBy(String author) {
 		Bson filter = eq(_auth, author);
-		mongodbCollection.deleteMany(filter);		
+		_mongodbCollection.deleteMany(filter);		
 	}
 
 	@Override
 	public void deleteAll() {
-		mongodbCollection.deleteMany(new Document());
+		_mongodbCollection.deleteMany(new Document());
 	}
-	
 }
