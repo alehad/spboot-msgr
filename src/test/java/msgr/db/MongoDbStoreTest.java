@@ -41,6 +41,10 @@ class MongoDbStoreTest {
 
 	@Test
 	void test() {
+		if (!mongoDb.isInitialized()) {
+			mongoDb.initialize();
+		}
+		
 		mongoDb.deleteAll();
 		
 		assertEquals(mongoDb.getMessages().size(), 0, "empty mongo db before tests");
@@ -53,13 +57,13 @@ class MongoDbStoreTest {
 
 		assertEquals(mongoDb.getMessages().size(), 100, "100 messages in mongo");
 		
-		assertEquals(mongoDb.getMessage(1).getMessage(), "msg 1", "got msg 1");
+		assertEquals(mongoDb.getMessage(0).getMessage(), "msg 1", "got msg 1");
 		
 		assertEquals(mongoDb.getMessagesBy("auth1").size(), 100, "got 100 messages by auth1");
 		
-		mongoDb.updateMessage(1, new Message("new message 1", "auth2"));
+		mongoDb.updateMessage(0, new Message("new message 1", "auth2"));
 		
-		assertEquals(mongoDb.getMessage(1).getMessage(), "new message 1", "got updated msg 1");
+		assertEquals(mongoDb.getMessage(0).getMessage(), "new message 1", "got updated msg 1");
 		
 		assertEquals(mongoDb.getMessagesBy("auth2").size(), 1, "got 1 messages by auth2");
 		
@@ -67,7 +71,7 @@ class MongoDbStoreTest {
 
 		assertEquals(mongoDb.getMessages().size(), 99, "99 messages in mongo after delete by auth2");
 		
-		assertEquals(mongoDb.getMessagesBy("auth1").size(), 99, "got 100 messages by auth1");
+		assertEquals(mongoDb.getMessagesBy("auth1").size(), 99, "got 99 messages by auth1");
 
 		assertEquals(mongoDb.getMessagesBy("auth2").size(), 0, "no messages by auth2 after delete");
 

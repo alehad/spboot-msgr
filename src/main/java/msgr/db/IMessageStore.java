@@ -12,7 +12,7 @@ public interface IMessageStore {
 
 	public Message createMessage(Message msg);
 
-	// by id
+	// by id [zero based -- first message id = 0]
 	public Message getMessage(int id);
 	
 	public Message updateMessage(int id, Message msg);
@@ -27,4 +27,9 @@ public interface IMessageStore {
 	public void deleteMessagesBy(String author);
 	
 	public void deleteAll();
+	
+	// store initialization
+	public boolean isInitialized();
+	
+	public void initialize();
 }

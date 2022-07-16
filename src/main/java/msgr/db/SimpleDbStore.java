@@ -1,7 +1,6 @@
 package msgr.db;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,7 +12,7 @@ import msgr.msg.Message;
 public class SimpleDbStore implements IMessageStore {
 
 	//naive implementation
-	private List<Message> messages = new ArrayList<Message>(Arrays.asList(new Message("msg1", "auth1"), new Message("msg2", "auth2")));
+	private List<Message> messages = new ArrayList<Message>();
 	
 	@Override
 	public List<Message> getMessages() {
@@ -32,7 +31,7 @@ public class SimpleDbStore implements IMessageStore {
 
 	@Override
 	public Message updateMessage(int id, Message msg) {
-		messages.listIterator(id).set(msg);	// should check for IndexOutOfBounds exception
+		messages.set(id, msg); 	// should check for IndexOutOfBounds exception
 		return msg;
 	}
 
@@ -66,5 +65,16 @@ public class SimpleDbStore implements IMessageStore {
 	@Override
 	public void deleteAll() {
 		messages.clear();
+	}
+
+	@Override
+	public boolean isInitialized() {
+		// initialized inline at construction
+		return true;
+	}
+
+	@Override
+	public void initialize() {
+		// initialized inline at construction
 	}
 }
