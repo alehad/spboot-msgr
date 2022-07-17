@@ -2,9 +2,10 @@ package msgr.db;
 
 import java.util.List;
 
+import msgr.init.IInitializableComponent;
 import msgr.msg.Message;
 
-public interface IMessageStore {
+public interface IMessageStore extends IInitializableComponent {
 	
 	// basic CRUD operations
 	
@@ -27,9 +28,4 @@ public interface IMessageStore {
 	public void deleteMessagesBy(String author);
 	
 	public void deleteAll();
-	
-	// store initialization
-	public boolean isInitialized();
-	
-	public void initialize();
 }

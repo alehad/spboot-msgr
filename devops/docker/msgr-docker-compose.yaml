@@ -50,6 +50,6 @@ services:
      - mongodb
      - kafka
     container_name: docker-msgr
-    image: alehad/msgr:1.2
+    image: alehad/msgr
     ports:
      - "8088:8088"
