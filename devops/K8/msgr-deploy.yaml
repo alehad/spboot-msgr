@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: msgr-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: msgr
+  template:
+    metadata:
+      labels:
+        app: msgr
+    spec:
+      containers:
+      - name: docker-msgr
+        image: alehad/msgr
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 8088
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: msgr-svc
+spec:
+  selector:
+    app: msgr
+  type: LoadBalancer #this type denotes that this is External Service, together with the nodePort below
+  ports:
+    - protocol: TCP
+      port: 8088 
+      targetPort: 8088
+      nodePort: 30088
