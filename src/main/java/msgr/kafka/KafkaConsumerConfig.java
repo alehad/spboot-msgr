@@ -3,7 +3,7 @@ package msgr.kafka;
 import java.util.HashMap;
 import java.util.Map;
 
-import msgr.msg.Message;
+import msgr.broker.MessageRequestParams;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -28,18 +28,18 @@ public class KafkaConsumerConfig {
 	private String _groupId;
 
     @Bean
-    public ConsumerFactory<String, Message> messageConsumerFactory() {
+    public ConsumerFactory<String, MessageRequestParams> messageParamsConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,  _bootstrapAddress);
         props.put(ConsumerConfig.GROUP_ID_CONFIG,       	_groupId);
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<>(Message.class));
+        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<>(MessageRequestParams.class));
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, Message> messageKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, Message> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, MessageRequestParams> messageParamsKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, MessageRequestParams> factory =
         	new ConcurrentKafkaListenerContainerFactory<>();
-        	factory.setConsumerFactory(messageConsumerFactory());
+        	factory.setConsumerFactory(messageParamsConsumerFactory());
         return factory;
     }
 }

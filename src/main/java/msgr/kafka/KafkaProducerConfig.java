@@ -3,7 +3,7 @@ package msgr.kafka;
 import java.util.HashMap;
 import java.util.Map;
 
-import msgr.msg.Message;
+import msgr.broker.MessageRequestParams;
 
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,8 +13,8 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ser.std.StringSerializer;
+import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 
 @Configuration
 public class KafkaProducerConfig {
@@ -23,7 +23,7 @@ public class KafkaProducerConfig {
 	private String _bootstrapAddress;
 	
     @Bean
-    public ProducerFactory<String, Message> messageProducerFactory() {
+    public ProducerFactory<String, MessageRequestParams> messageParamsProducerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,	  _bootstrapAddress);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,   StringSerializer.class);
@@ -32,7 +32,7 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, Message> messageKafkaTemplate() {
-        return new KafkaTemplate<>(messageProducerFactory());
+    public KafkaTemplate<String, MessageRequestParams> messageParamsKafkaTemplate() {
+        return new KafkaTemplate<>(messageParamsProducerFactory());
     }
 }
