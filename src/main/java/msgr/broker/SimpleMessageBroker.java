@@ -2,7 +2,6 @@ package msgr.broker;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,7 @@ public class SimpleMessageBroker implements IMessageBroker {
 	//it does not use any transport/broker mechanism for request handling
 
 	@Override
-	public List<Message> handleRequest(MessageRequestTopic topic, Properties params, Message msg) {
+	public List<Message> handleRequest(MessageRequestTopic topic, MessageRequestParams params) {
 
 		List<Message> result = new ArrayList<Message>();
 
@@ -32,37 +31,37 @@ public class SimpleMessageBroker implements IMessageBroker {
     	}
 		case GetAllMessagesBy:
 		{
-			result = messageStoreService.getStore().getMessagesBy(params.getProperty("byAuthor"));
+			result = messageStoreService.getStore().getMessagesBy(params.getFindByAuthor());
 			break;
 		}
 		case GetOneMessage:
 		{
-			result.add(messageStoreService.getStore().getMessage(Integer.parseInt(params.getProperty("msgId"))));
+			result.add(messageStoreService.getStore().getMessage(params.getFindById()));
 			break;
 		}
 		case AddOneMessage:
 		{
-			result.add(messageStoreService.getStore().createMessage(msg));
+			result.add(messageStoreService.getStore().createMessage(params.getMessagePayload()));
 			break;
 		}
 		case UpdateMessage:
 		{
-			result.add(messageStoreService.getStore().updateMessage(Integer.parseInt(params.getProperty("msgId")), msg));
+			result.add(messageStoreService.getStore().updateMessage(params.getFindById(), params.getMessagePayload()));
 			break;
 		}
 		case UpdateMessageBy:
 		{
-			result.add(messageStoreService.getStore().updateMessageBy(params.getProperty("byAuthor"), msg));
+			result.add(messageStoreService.getStore().updateMessageBy(params.getFindByAuthor(), params.getMessagePayload()));
 			break;
 		}
 		case DeleteMessage:
 		{
-			messageStoreService.getStore().deleteMessage(Integer.parseInt(params.getProperty("msgId")));
+			messageStoreService.getStore().deleteMessage(params.getFindById());
 			break;
 		}
 		case DeleteMessagesBy:
 		{
-			messageStoreService.getStore().deleteMessagesBy(params.getProperty("byAuthor"));
+			messageStoreService.getStore().deleteMessagesBy(params.getFindByAuthor());
 			break;
 		}
 		case DeleteAllMessages:
