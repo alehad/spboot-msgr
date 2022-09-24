@@ -22,15 +22,8 @@ import msgr.svc.MessageStoreService;
 @Service
 public class KafkaMessageBroker implements IMessageBroker {
 
-//	@Autowired
-//	private SimpleMessageBroker simpleMessageBroker;
-	
 	@Autowired
 	private MessageStoreService messageStoreService;
-	
-//	List<Message> result = new ArrayList<Message>();
-	
-//	private HashMap<String, Boolean> requestProcessedStatus = new HashMap<String, Boolean>();
 	
 	class ProcessingResult {
 		Boolean requestProcessed = false;
@@ -60,34 +53,15 @@ public class KafkaMessageBroker implements IMessageBroker {
 		}
 	    
         return requestKey;
-//        
-//	    future.addCallback(new ListenableFutureCallback<SendResult<String, MessageRequestParams>>() {
-//	        @Override
-//	        public void onSuccess(SendResult<String, MessageRequestParams> result) {
-//	            System.out.println("Sent message=[" + 
-//	            				  (params.getMessagePayload() == null ? requestTopic.topic : params.getMessagePayload().getMessage()) + 
-//	            				  "] with offset=[" + result.getRecordMetadata().offset() + "]");
-//
-//	        }
-//	        @Override
-//	        public void onFailure(Throwable ex) {
-//	            System.out.println("Unable to send message=[" + 
-//	            				  (params.getMessagePayload() == null ? requestTopic.topic : params.getMessagePayload().getMessage()) + 
-//	            				  "] due to : " + ex.getMessage());
-//	        }
-//	    });
 	}
 	
 	@Override
 	public boolean isInitialized() {
-		// TODO Auto-generated method stub
 		return true;
 	}
 
 	@Override
 	public void initialize() {
-		// TODO Auto-generated method stub
-		
 	}
 	
 	// generate simple request correlation id 
@@ -99,7 +73,6 @@ public class KafkaMessageBroker implements IMessageBroker {
 	public List<Message> handleRequest(MessageRequestTopic topic, MessageRequestParams params) {
 		String requestKey = postRequest(topic, params);
 		
-//	    while (!requestProcessedStatus.containsKey(requestKey) && !requestProcessedStatus.get(requestKey).requestProcessed) {
 	    while (!requestProcessedStatus.get(requestKey).requestProcessed) {
 	    	try {
 				Thread.sleep(1000L);
@@ -178,29 +151,5 @@ public class KafkaMessageBroker implements IMessageBroker {
 		}
 		
 		processingResult.requestProcessed = true;
-		
-//		if (requestProcessedStatus.containsKey(requestKey)) {
-//			ProcessingResult processingResult = new ProcessingResult();
-//			processingResult.requestProcessed = true;
-//			processingResult.result = result;
-//			requestProcessedStatus.put(requestKey, processingResult);
-//		}
-		
-//		return result;
 	}
-
-
-//	@KafkaListener(
-//     topics = "alehad.messenger.topic.getall", 
-//     containerFactory = "messageParamsKafkaListenerContainerFactory")
-//	public void getAllMessagesListener(MessageRequestParams params) {
-//		 System.out.println("got alehad.messenger.topic.getall topic to process");
-//	}
-//	
-//	@KafkaListener(
-//		     topics = "alehad.messenger.topic.addone", 
-//		     containerFactory = "messageParamsKafkaListenerContainerFactory")
-//	public void addOneMessageListener(MessageRequestParams params) {
-//		 System.out.println("got alehad.messenger.topic.addone topic to process, message = " + params.getMessagePayload().getMessage());
-//	}
 }

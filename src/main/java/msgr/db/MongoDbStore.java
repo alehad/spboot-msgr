@@ -60,7 +60,6 @@ public class MongoDbStore implements IMessageStore {
 		_mongodbClient = MongoClients.create("mongodb://" + _mongodbHost + ":" + _mongodbPort);
 
 		_mongodb = _mongodbClient.getDatabase(_mongodbName); // if not present, Mongo will create it
-		// do we need to authenticate?
 		
 		boolean createCollection = true;
 		
@@ -96,8 +95,6 @@ public class MongoDbStore implements IMessageStore {
 				messages.add(new StoredMessage(doc.getInteger(_msgId), doc.getString(_msg), doc.getString(_auth)));
 			}
 		}
-
-		//Collections.sort(messages);
 
 		return messages;
 	}
