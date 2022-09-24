@@ -1,11 +1,20 @@
 package msgr.broker;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.KafkaFuture;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -32,6 +41,11 @@ public class KafkaMessageBroker implements IMessageBroker {
 	
 	private HashMap<String, ProcessingResult> requestProcessedStatus = new HashMap<String, ProcessingResult>();
 	
+	@Value("${kafka.bootstrap.address}")
+	private String bootstrapServerAddress;
+	
+	private boolean initialized = false;
+	
 	@Autowired
 	private KafkaTemplate<String, MessageRequestParams> kafkaTemplate;
 
@@ -57,13 +71,59 @@ public class KafkaMessageBroker implements IMessageBroker {
 	
 	@Override
 	public boolean isInitialized() {
-		return true;
+		return initialized;
 	}
 
 	@Override
 	public void initialize() {
+		/* We need to create kafka topics programmatically otherwise the first time
+		 * services are running and topic is being published, the kafka listener will not get notified
+		 * If you restart the services and keep the kafka cluster running, same topic will be successfully
+		 * processed, but not the first time it is issued. Hence initialize will create all the topics
+		 * we care about that are not already known/created on the kafka cluster
+		 */
+		Properties kafkaConfig = new Properties();
+		
+		kafkaConfig.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServerAddress);
+		
+		try (Admin admin = Admin.create(kafkaConfig)) {
+            createTopic(admin, "alehad.messenger.topic.getall");
+            createTopic(admin, "alehad.messenger.topic.getallby");
+            createTopic(admin, "alehad.messenger.topic.getone");
+            createTopic(admin, "alehad.messenger.topic.addone");
+            createTopic(admin, "alehad.messenger.topic.update");
+            createTopic(admin, "alehad.messenger.topic.updateby");
+            createTopic(admin, "alehad.messenger.topic.delete");
+            createTopic(admin, "alehad.messenger.topic.deleteby");
+            createTopic(admin, "alehad.messenger.topic.deleteall");
+
+            initialized = true;
+        } catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
+    public void createTopic(Admin admin, String topicName) throws Exception {
+		ListTopicsResult topics = admin.listTopics();
+    	
+		if (topics.names().get().contains(topicName)) {
+			return;
+		}
+		
+        int partitions = 1;
+        short replicationFactor = 1;
+        
+        NewTopic newTopic = new NewTopic(topicName, partitions, replicationFactor);
+
+        CreateTopicsResult result = admin.createTopics(Collections.singleton(newTopic));
+
+        KafkaFuture<Void> future = result.values().get(topicName);
+
+        // block until topic creation has completed or failed
+        future.get();
+    }
+    
 	// generate simple request correlation id 
 	private static String generateRequestCorrelationId(String topic, int partition, long offset) {
 		return topic + "-" + partition + "-" + offset;
