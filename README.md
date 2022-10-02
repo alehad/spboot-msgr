@@ -1,8 +1,6 @@
 # spboot-msgr
 Spring Boot Messenger App
 
-docker.hub: alehad/msgr
-
 What is this:
 Simple REST WebService that allows for creating/updating/deleting of simple messages:
 
