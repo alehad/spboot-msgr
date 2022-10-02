@@ -15,8 +15,11 @@ Folders:
 c4 > contains c4 diagram of the app
 
 devops > docker > contains docker images for running app or required docker images [mongo/kakfa/etc] locally
+
   > msgr-docker-compose.yaml - docker compose file for running all required components + the app itself
+  > 
   > msgr-pipeline-services-compose.yaml - docker compose file for running all services locally [useful for debugging]
+  > 
   > mongo-compose.yaml - docker compose file for running mongo/mongo-express locally
 
   > docker compose -f msgr-docker-compose.yaml up [/down] 
