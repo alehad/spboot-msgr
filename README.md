@@ -18,15 +18,15 @@ devops > docker > contains docker images for running app or required docker imag
 
   > msgr-docker-compose.yaml - docker compose file for running all required components + the app itself
   > 
-  > msgr-pipeline-services-compose.yaml - docker compose file for running all services locally [useful for debugging]
+  > msgr-pipeline-services-compose.yaml - docker compose file for running all required services locally
   > 
   > mongo-compose.yaml - docker compose file for running mongo/mongo-express locally
 
   > docker compose -f msgr-docker-compose.yaml up [/down] 
 
-jenkins > contains the shell script for running jenkins locally [docker in docker -dnd] for building/disting to hub.docker.com 
+jenkins > contains the shell script for running jenkins locally  
 
-k8> same as devops folder but containg the k8 deployment files. use minikube to run locally
+k8> same as devops folder but containg the k8 deployment files
 
 App:
 
