@@ -15,9 +15,9 @@ Folders:
 c4 > contains c4 diagram of the app
 
 devops > docker > contains docker images for running app or required docker images [mongo/kakfa/etc] locally
-  msgr-docker-compose.yaml - docker compose file for running all required components + the app itself
-  msgr-pipeline-services-compose.yaml - docker compose file for running all services locally [useful for debugging]
-  mongo-compose.yaml - docker compose file for running mongo/mongo-express locally
+  > msgr-docker-compose.yaml - docker compose file for running all required components + the app itself
+  > msgr-pipeline-services-compose.yaml - docker compose file for running all services locally [useful for debugging]
+  > mongo-compose.yaml - docker compose file for running mongo/mongo-express locally
 
   > docker compose -f msgr-docker-compose.yaml up [/down] 
 
@@ -37,10 +37,7 @@ I plan to add caching layer using similar concept and wire in Redis or ES on dem
 
 Similar to this, different message brokering technologies could also be introduced.
 
-Kafka implementation in the app is a 'sync' implementation, whereby the KafkaMessageBroker will handle both posting
-and processing of the kafka topics. Sync implementation allows for the app using the Kafka broker to be testable via Postman.
-This is my own sync implementation, more standard spring based sync Kafka implementation article can be found at: 
-  https://dzone.com/articles/synchronous-kafka-using-spring-request-reply-1
-
+Kafka implementation in the app is a simple 'sync' implementation, whereby the KafkaMessageBroker will handle both posting
+and processing of the kafka topics.
 
 This app is not intended for any other use except for learning purposes.
