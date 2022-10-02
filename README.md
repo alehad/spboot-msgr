@@ -12,6 +12,7 @@ Simple REST WebService that allows for creating/updating/deleting of simple mess
 }
 
 Folders:
+
 c4 > contains c4 diagram of the app
 
 devops > docker > contains docker images for running app or required docker images [mongo/kakfa/etc] locally
