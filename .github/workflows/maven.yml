@@ -26,8 +26,8 @@ jobs:
       uses: isbang/compose-action@v1.3.2
       with:
         compose-file: "./devops/docker/msgr-pipeline-services-compose.yaml"
-    - name: Sleep for 30 seconds
-      run: sleep 30s
+    - name: Sleep for 10 seconds
+      run: sleep 10s
       shell: bash
     - name: Build with Maven
-      run: mvn -B clean package -DskipTests --file pom.xml
+      run: mvn -B clean package --file pom.xml
