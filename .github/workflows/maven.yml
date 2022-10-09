@@ -29,6 +29,8 @@ jobs:
     - name: Sleep for 10 seconds
       run: sleep 10s
       shell: bash
+    - name: Build with Maven  # this builds java package
+      run: mvn -B clean package -DskipTests --file pom.xml
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
@@ -36,12 +38,10 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-    - name: Build and push
+    - name: Build and Push Docker Image  # this builds docker image, needs java package built first
       uses: docker/build-push-action@v3
       with:
           context: .
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/msgr:latest
-#    - name: Build with Maven
-#      run: mvn -B clean package -DskipTests --file pom.xml
