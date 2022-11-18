@@ -15,17 +15,44 @@ c4 > contains c4 diagram of the app
 
 devops > docker > contains docker images for running app or required docker images [mongo/kakfa/etc] locally
 
-  > msgr-docker-compose.yaml - docker compose file for running all required components + the app itself
+  > msgr-docker-compose.yml - docker compose file for running all required components + the app itself
+  >
+  > to run full app locally: 
+  >
+  > 	docker compose -f msgr-docker-compose.yml up [/down] 
   > 
-  > msgr-pipeline-services-compose.yaml - docker compose file for running all required services locally
-  > 
-  > mongo-compose.yaml - docker compose file for running mongo/mongo-express locally
+  >
+  > other compose files are useful for running locally some/all services needed when developing app:
+  >
+  > msgr-pipeline-services-compose.yml - docker compose file for running all required services locally
 
-  > docker compose -f msgr-docker-compose.yaml up [/down] 
 
 jenkins > contains the shell script for running jenkins locally  
 
 k8> same as devops folder but containg the k8 deployment files
+
+
+Azure:
+
+App can be deployed to Azure via 'multi-container docker compose' feature in AppService setup. 
+
+Use msgr-docker-compose.yml to define the compose config. Use 'docker hub' option for image location [no need to store in Azure registry].
+
+IMPORTANT:
+
+Once you create the AppService as per above, you need to tell Azure which container is the 'main' container, or 'web' container in Azure parlance.
+
+You also need to define port mapping, if your service is not running on default port 80 or 8080 [in our case, service is running on 8088 within container].
+
+Azure will scan the containers to see if any services within them have open 80/8080 port internally and will assign that container to be the web container.
+
+Msgr app service opens internally port 8088, and even though this is mapped to external 80/8080 ports, it is not enough for Azure to recognise it.
+
+So, in Configuration section of the AppService, the following settings need to be specified:
+
+	WEBSITES_PORT = 8088 [this will redirect all incoming traffic to 8088 port]
+	WEBSITES_WEB_CONTAINER_NAME = msgr [this identifies the main/web container to which traffic should be directed]
+
 
 App:
 
@@ -41,3 +68,4 @@ Kafka implementation in the app is a simple 'sync' implementation, whereby the K
 and processing of the kafka topics.
 
 This app is not intended for any other use except for learning purposes.
+

@@ -29,7 +29,6 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', jenkins_credentials) {
-                        app_docker_image.push("1.4")
                         app_docker_image.push("latest")
                     }
                 }
