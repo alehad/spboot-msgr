@@ -14,7 +14,7 @@ import org.springframework.context.annotation.ComponentScan;
  * otherwise you will get 404 error, as spring will not be able to wire the rest controller 
  */
 @SpringBootApplication
-@ComponentScan(basePackages = {"msgr.init", "msgr.db", "msgr.svc", "msgr.broker", "msgr.kafka", "msgr.app"})
+@ComponentScan(basePackages = {"msgr.init", "msgr.db", "msgr.svc", "msgr.cache", "msgr.broker", "msgr.kafka", "msgr.app"})
 public class MessengerAppServer {
 
 	public static void main(String[] args) {

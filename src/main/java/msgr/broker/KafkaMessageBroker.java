@@ -26,14 +26,18 @@ import org.springframework.util.concurrent.ListenableFuture;
 //import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import msgr.msg.Message;
+import msgr.svc.MessageRepositoryService;
 import msgr.svc.MessageStoreService;
 
 @Service
 public class KafkaMessageBroker implements IMessageBroker {
 
+//	@Autowired
+//	private MessageStoreService messageStoreService;
+
 	@Autowired
-	private MessageStoreService messageStoreService;
-	
+	private MessageRepositoryService messageRepositoryService;
+
 	class ProcessingResult {
 		Boolean requestProcessed = false;
 		List<Message> result 	 = new ArrayList<Message>();
@@ -160,55 +164,59 @@ public class KafkaMessageBroker implements IMessageBroker {
 			return;
 		}
 
-		switch (topic) {
-		case "alehad.messenger.topic.getall":
-    	{
-    		processingResult.result = messageStoreService.getStore().getMessages();
-    		break;
-    	}
-		case "alehad.messenger.topic.getallby":
-		{
-			processingResult.result = messageStoreService.getStore().getMessagesBy(params.getFindByAuthor());
-			break;
-		}
-		case "alehad.messenger.topic.getone":
-		{
-			processingResult.result.add(messageStoreService.getStore().getMessage(params.getFindById()));
-			break;
-		}
-		case "alehad.messenger.topic.addone":
-		{
-			processingResult.result.add(messageStoreService.getStore().createMessage(params.getMessagePayload()));
-			break;
-		}
-		case "alehad.messenger.topic.update":
-		{
-			processingResult.result.add(messageStoreService.getStore().updateMessage(params.getFindById(), params.getMessagePayload()));
-			break;
-		}
-		case "alehad.messenger.topic.updateby":
-		{
-			processingResult.result.add(messageStoreService.getStore().updateMessageBy(params.getFindByAuthor(), params.getMessagePayload()));
-			break;
-		}
-		case "alehad.messenger.topic.delete":
-		{
-			messageStoreService.getStore().deleteMessage(params.getFindById());
-			break;
-		}
-		case "alehad.messenger.topic.deleteby":
-		{
-			messageStoreService.getStore().deleteMessagesBy(params.getFindByAuthor());
-			break;
-		}
-		case "alehad.messenger.topic.deleteall":
-		{
-			messageStoreService.getStore().deleteAll();
-			break;
-		}
-		default:
-			break;
-		}
+		MessageRequestTopic messageTopic = MessageRequestTopic.getTopic(topic);
+		
+		processingResult.result = messageRepositoryService.handleRequest(messageTopic, params);
+		
+//		switch (topic) {
+//		case "alehad.messenger.topic.getall":
+//    	{
+//    		processingResult.result = messageStoreService.getStore().getMessages();
+//    		break;
+//    	}
+//		case "alehad.messenger.topic.getallby":
+//		{
+//			processingResult.result = messageStoreService.getStore().getMessagesBy(params.getFindByAuthor());
+//			break;
+//		}
+//		case "alehad.messenger.topic.getone":
+//		{
+//			processingResult.result.add(messageStoreService.getStore().getMessage(params.getFindById()));
+//			break;
+//		}
+//		case "alehad.messenger.topic.addone":
+//		{
+//			processingResult.result.add(messageStoreService.getStore().createMessage(params.getMessagePayload()));
+//			break;
+//		}
+//		case "alehad.messenger.topic.update":
+//		{
+//			processingResult.result.add(messageStoreService.getStore().updateMessage(params.getFindById(), params.getMessagePayload()));
+//			break;
+//		}
+//		case "alehad.messenger.topic.updateby":
+//		{
+//			processingResult.result.add(messageStoreService.getStore().updateMessageBy(params.getFindByAuthor(), params.getMessagePayload()));
+//			break;
+//		}
+//		case "alehad.messenger.topic.delete":
+//		{
+//			messageStoreService.getStore().deleteMessage(params.getFindById());
+//			break;
+//		}
+//		case "alehad.messenger.topic.deleteby":
+//		{
+//			messageStoreService.getStore().deleteMessagesBy(params.getFindByAuthor());
+//			break;
+//		}
+//		case "alehad.messenger.topic.deleteall":
+//		{
+//			messageStoreService.getStore().deleteAll();
+//			break;
+//		}
+//		default:
+//			break;
+//		}
 		
 		processingResult.requestProcessed = true;
 	}

@@ -17,4 +17,13 @@ public enum MessageRequestTopic {
 	MessageRequestTopic(String topic) {
 		this.topic = topic;
 	}
+	
+	public static MessageRequestTopic getTopic(String topic) {
+	    for (MessageRequestTopic t : values()) {
+	        if (t.topic.equals(topic)) {
+	            return t;
+	        }
+	    }
+	    return null;
+	}
 }
