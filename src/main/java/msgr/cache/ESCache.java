@@ -3,8 +3,8 @@ package msgr.cache;
 import java.util.ArrayList;
 import java.util.List;
 
-//import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import msgr.broker.MessageRequestParams;
@@ -67,47 +67,114 @@ public class ESCache implements IMessageCache {
     		}
     		break;
     	}
-/*		case GetAllMessagesBy:
+		case GetAllMessagesBy:
 		{
-			result = messageStoreService.getStore().getMessagesBy(params.getFindByAuthor());
+			Page<ESMessage> esMessages = esMessageRepository.findByAuthor(params.getFindByAuthor(), null);
+			for (ESMessage m : esMessages) {
+    			result.add(new Message(m.getMessage(), m.getAuthor()));
+    		}
 			break;
 		}
 		case GetOneMessage:
 		{
-			result.add(messageStoreService.getStore().getMessage(params.getFindById()));
+			// Note: trivial implementation, not to be used on large data set
+			// right way to implement is via FindById, but requires setting the @Id field in ES done properly
+			// Note: ES will override Id passed in the constructor of the ESMessage, if field is tagged with @Id
+    		Iterable<ESMessage> esMessages = esMessageRepository.findAll();
+    		int counter = 0;
+    		for (ESMessage m : esMessages) {
+    			if (++counter == params.getFindById()) {
+    				result.add(new Message(m.getMessage(), m.getAuthor()));
+    				break;
+    			}
+    		}
 			break;
 		}
 		case AddOneMessage:
 		{
+			//TODO: refactor add message to physical store to use kafka, once the ESCache does not use messageStore directly
 			result.add(messageStoreService.getStore().createMessage(params.getMessagePayload()));
+
+			//if saving to message store was successful, also update the cache
+			//this is a naive implementation, as there is no offline sync between physical store being updated and cache being refreshed
+			//the cache refresh should also be handled via kafka update once implemented for saving in step 1 above
+			if (!result.isEmpty()) {
+				esMessageRepository.save(new ESMessage(params.getMessagePayload()));
+			}
 			break;
 		}
 		case UpdateMessage:
 		{
+			//TODO: refactor to use kafka, once the ESCache does not use messageStore directly
 			result.add(messageStoreService.getStore().updateMessage(params.getFindById(), params.getMessagePayload()));
+
+			//if saving to message store was successful, also update the cache -- refactor to use kafka
+			if (!result.isEmpty()) {
+	    		Iterable<ESMessage> esMessages = esMessageRepository.findAll();
+	    		int counter = 0;
+	    		for (ESMessage m : esMessages) {
+	    			if (++counter == params.getFindById()) {
+	    				m.setAuthor(params.getMessagePayload().getAuthor());
+	    				m.setMessage(params.getMessagePayload().getMessage());
+	    				esMessageRepository.save(m);
+	    				break;
+	    			}
+	    		}
+			}
 			break;
 		}
 		case UpdateMessageBy:
 		{
+			//naive implementation -- just update first message found by this author
 			result.add(messageStoreService.getStore().updateMessageBy(params.getFindByAuthor(), params.getMessagePayload()));
+
+			//if saving to message store was successful, also update the cache -- refactor to use kafka
+			//this is a bad implementation because there is no guarantee that order of messages in message store and cache is the same
+			//TODO: refactor to ensure same message updated in cache and in store. might be involved as need a way to identify what's been updated in store
+			if (!result.isEmpty()) {
+				Page<ESMessage> esMessages = esMessageRepository.findByAuthor(params.getFindByAuthor(), null);
+				for (ESMessage m : esMessages) {
+					//for now just update the first one found
+    				m.setMessage(params.getMessagePayload().getMessage());
+    				esMessageRepository.save(m);
+    				break;
+	    		}
+			}
 			break;
 		}
 		case DeleteMessage:
 		{
+			//this relies on order of messages in message store and cache being the same, which is not necessarily the case
+			//TODO: in order to address this problem we need to fix setting of the message Id, which will ensure same messages are deleted 
 			messageStoreService.getStore().deleteMessage(params.getFindById());
-			break;
+
+    		Iterable<ESMessage> esMessages = esMessageRepository.findAll();
+    		int counter = 0;
+    		for (ESMessage m : esMessages) {
+    			if (++counter == params.getFindById()) {
+    				esMessageRepository.delete(m);
+    				break;
+    			}
+    		}
+    		break;
 		}
 		case DeleteMessagesBy:
 		{
 			messageStoreService.getStore().deleteMessagesBy(params.getFindByAuthor());
+
+			Page<ESMessage> esMessages = esMessageRepository.findByAuthor(params.getFindByAuthor(), null);
+			esMessageRepository.deleteAll(esMessages);
 			break;
 		}
 		case DeleteAllMessages:
 		{
 			messageStoreService.getStore().deleteAll();
+			
+			esMessageRepository.deleteAll();
+			
 			break;
 		}
-*/		default:
+		default:
 			break;
 		}
 		
