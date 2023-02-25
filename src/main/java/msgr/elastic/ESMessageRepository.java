@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ESMessageRepository extends ElasticsearchRepository<ESMessage, String> {
 	Page<ESMessage> findByAuthor(String author, Pageable pageable);
+	Page<ESMessage> findByMessageId(int messageId, Pageable pageable);
 }

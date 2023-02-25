@@ -2,37 +2,43 @@ package msgr.elastic;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
+//import org.springframework.data.elasticsearch.annotations.Field;
+//import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import msgr.msg.Message;
+import msgr.msg.StoredMessage;
 
 @Document(indexName = "esmessageidx")
-public class ESMessage {
+public class ESMessage extends StoredMessage {
 
     @Id
     private String id;
 
-    @Field(type = FieldType.Text)
+    /*
+    //@Field(type = FieldType.Text)
     private String message;
     
-    @Field(type = FieldType.Text)
+    //@Field(type = FieldType.Text)
 	private String author;
-	
+	*/
+    
 	public ESMessage() {
 		//no-op default constructor
 	}
 	
-	public ESMessage(Message msg) {
-		this.message = msg.getMessage();
-		this.author  = msg.getAuthor();
+	public ESMessage(int msgId, Message msg) {
+		super(msgId, msg);
 	}
 
-	public ESMessage(String message, String author) {
-		this.message = message;
-		this.author  = author;
+	public ESMessage(int msgId, String message, String author) {
+		super(msgId, message, author);
 	}
 
+	public ESMessage(StoredMessage msg) {
+		super(msg.getMessageId(), msg);
+	}
+	
+	/*
 	public String getMessage() {
 		return message;
 	}
@@ -46,4 +52,5 @@ public class ESMessage {
 	public void setAuthor(String author) {
 		this.author = author;
 	}
+	*/
 }
