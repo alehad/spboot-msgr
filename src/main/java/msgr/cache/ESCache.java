@@ -23,9 +23,6 @@ public class ESCache implements IMessageCache {
     @Autowired
     private ESMessageRepository esMessageRepository;
 
-//    @Autowired
-//    private RestHighLevelClient esClient;
-
     @Override
 	public boolean isInitialized() {
 		return esMessageRepository.count() > 0L ? true : false;
