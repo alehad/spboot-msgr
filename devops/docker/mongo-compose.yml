@@ -19,3 +19,9 @@ services:
      - mongodb
     ports:
      - "8082:8081"
+    volumes:
+     - mongo-data:/data/db
+
+volumes:
+  mongo-data:
+    driver: local
