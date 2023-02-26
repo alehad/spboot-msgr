@@ -5,6 +5,8 @@ services:
     image: mongo
     ports:
      - "27017:27017"
+    volumes:
+     - mongo-data:/data/db
 
   # mongo express is not required for running msgr but useful to inspect data stored in mongo
   # alternative to specifying mongo-express services as part of compose.yaml is to start it via
@@ -61,8 +63,8 @@ services:
         hard: 65536
     cap_add:
       - IPC_LOCK
-    #volumes:
-    #  - elasticsearch-data:/usr/share/elasticsearch/data
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
       - 9300:9300
@@ -77,6 +79,8 @@ services:
     depends_on:
       - elasticsearch
 
-#volumes:
-#  elasticsearch-data:
-#    driver: local
+volumes:
+  elasticsearch-data:
+    driver: local
+  mongo-data:
+    driver: local
