@@ -9,15 +9,16 @@ import org.springframework.stereotype.Service;
 import msgr.broker.MessageRequestParams;
 import msgr.broker.MessageRequestTopic;
 import msgr.msg.Message;
+import msgr.msg.StoredMessage;
 import msgr.redis.RedisMessage;
 import msgr.redis.RedisMessageRepository;
-//import msgr.svc.MessageStoreService;
+import msgr.svc.MessageStoreService;
 
 @Service
 public class RedisCache implements IMessageCache {
 
-//	@Autowired
-//	private MessageStoreService messageStoreService;
+	@Autowired
+	private MessageStoreService messageStoreService;
 	
     @Autowired
     private RedisMessageRepository redisMessageRepository;
@@ -46,20 +47,24 @@ public class RedisCache implements IMessageCache {
     	{
     		Iterable<RedisMessage> messages = redisMessageRepository.findAll();
     		for (RedisMessage m : messages) {
-    			result.add(m);
+    			result.add(m.asStoredMessage());
     		}
     		break;
     	}
-/*		case GetAllMessagesBy:
+		case GetAllMessagesBy:
 		{
-			Page<ESMessage> messages = esMessageRepository.findByAuthor(params.getFindByAuthor(), null);
-			messages.forEach(m -> result.add(m));
+			List<RedisMessage> messages = redisMessageRepository.findByAuthor(params.getFindByAuthor());
+			if (!messages.isEmpty()) {
+				messages.forEach(m -> result.add(m.asStoredMessage()));
+			}
 			break;
 		}
 		case GetOneMessage:
 		{
-			Page<ESMessage> messages = esMessageRepository.findByMessageId(params.getFindById(), null);
-			messages.forEach(m -> result.add(m));
+			List<RedisMessage> messages = redisMessageRepository.findByMessageId(params.getFindById());
+			if (!messages.isEmpty()) {
+				messages.forEach(m -> result.add(m.asStoredMessage()));
+			}
 			break;
 		}
 		case AddOneMessage:
@@ -68,11 +73,13 @@ public class RedisCache implements IMessageCache {
 			result.add(messageStoreService.getStore().createMessage(params.getMessagePayload()));
 
 			//naive implementation. if saving to message store was successful, also update the cache
-			result.forEach(message -> {
-				if (message instanceof StoredMessage) {
-					esMessageRepository.save(new ESMessage((StoredMessage) message));
-				}
-			});
+			if (!result.isEmpty()) {
+				result.forEach(message -> {
+					if (message instanceof StoredMessage) {
+						redisMessageRepository.save(new RedisMessage((StoredMessage) message));
+					}
+				});
+			}
 			break;
 		}
 		case UpdateMessage:
@@ -82,11 +89,11 @@ public class RedisCache implements IMessageCache {
 
 			//if saving to message store was successful, also update the cache -- refactor to use kafka
 			if (!result.isEmpty()) {
-				Page<ESMessage> messages = esMessageRepository.findByMessageId(params.getFindById(), null);
+				List<RedisMessage> messages = redisMessageRepository.findByMessageId(params.getFindById());
 				messages.forEach(m -> {
     				m.setAuthor(params.getMessagePayload().getAuthor());
     				m.setMessage(params.getMessagePayload().getMessage());
-    				esMessageRepository.save(m);
+    				redisMessageRepository.save(m);
 				});
 			}
 			break;
@@ -99,10 +106,10 @@ public class RedisCache implements IMessageCache {
 			result.forEach(message -> {
 				if (message instanceof StoredMessage) {
 					//this ensures we will update the same message (with same id) in the cache
-					Page<ESMessage> esMessages = esMessageRepository.findByMessageId(((StoredMessage)message).getMessageId(), null);
-					for (ESMessage m : esMessages) {
+					List<RedisMessage> esMessages = redisMessageRepository.findByMessageId(((StoredMessage)message).getMessageId());
+					for (RedisMessage m : esMessages) {
 	    				m.setMessage(message.getMessage());
-	    				esMessageRepository.save(m);
+	    				redisMessageRepository.save(m);
 		    		}
 				}
 			});
@@ -111,22 +118,22 @@ public class RedisCache implements IMessageCache {
 		case DeleteMessage:
 		{
 			messageStoreService.getStore().deleteMessage(params.getFindById());
-			esMessageRepository.deleteAll(esMessageRepository.findByMessageId(params.getFindById(), null));
+			redisMessageRepository.deleteAll(redisMessageRepository.findByMessageId(params.getFindById()));
     		break;
 		}
 		case DeleteMessagesBy:
 		{
 			messageStoreService.getStore().deleteMessagesBy(params.getFindByAuthor());
-			esMessageRepository.deleteAll(esMessageRepository.findByAuthor(params.getFindByAuthor(), null));
+			redisMessageRepository.deleteAll(redisMessageRepository.findByAuthor(params.getFindByAuthor()));
 			break;
 		}
 		case DeleteAllMessages:
 		{
 			messageStoreService.getStore().deleteAll();
-			esMessageRepository.deleteAll();
+			redisMessageRepository.deleteAll();
 			break;
 		}
-*/		default:
+		default:
 			break;
 		}
 		
