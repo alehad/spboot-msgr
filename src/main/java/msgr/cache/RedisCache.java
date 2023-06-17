@@ -30,12 +30,13 @@ public class RedisCache implements IMessageCache {
 
 	@Override
 	public void initialize() {
-		// TODO Auto-generated method stub
-		RedisMessage msg0 = new RedisMessage(0, "bonjour!", "alex");
-		RedisMessage msg1 = new RedisMessage(1, "bonjour encore!", "alex2");
+		List<Message> result = messageStoreService.getStore().getMessages();
 		
-		redisMessageRepository.save(msg0);
-		redisMessageRepository.save(msg1);
+		result.forEach(message -> {
+			if (message instanceof StoredMessage) {
+				redisMessageRepository.save(new RedisMessage((StoredMessage) message));
+			}
+		});
 	}
 
 	@Override
@@ -103,16 +104,18 @@ public class RedisCache implements IMessageCache {
 			//naive implementation -- just update first message found by this author
 			result.add(messageStoreService.getStore().updateMessageBy(params.getFindByAuthor(), params.getMessagePayload()));
 
-			result.forEach(message -> {
-				if (message instanceof StoredMessage) {
-					//this ensures we will update the same message (with same id) in the cache
-					List<RedisMessage> esMessages = redisMessageRepository.findByMessageId(((StoredMessage)message).getMessageId());
-					for (RedisMessage m : esMessages) {
-	    				m.setMessage(message.getMessage());
-	    				redisMessageRepository.save(m);
-		    		}
-				}
-			});
+			if (!result.isEmpty()) {
+				result.forEach(message -> {
+					if (message instanceof StoredMessage) {
+						//this ensures we will update the same message (with same id) in the cache
+						List<RedisMessage> esMessages = redisMessageRepository.findByMessageId(((StoredMessage)message).getMessageId());
+						for (RedisMessage m : esMessages) {
+		    				m.setMessage(message.getMessage());
+		    				redisMessageRepository.save(m);
+			    		}
+					}
+				});
+			}
 			break;
 		}
 		case DeleteMessage:

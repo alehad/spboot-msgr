@@ -32,9 +32,7 @@ public class ESCache implements IMessageCache {
 	@Override
 	public void initialize() {
 		// naive implementation -- load all messages from message store into ES
-		// in reality, ES should be loaded once and stored via volumes
-		// this also assumes message store is persisted, which in reality is not the case yet
-		// TODO: refactor this
+		// if ES cache is not initialised [eg. it's found to be empty]
 		List<Message> result = messageStoreService.getStore().getMessages();
 		
 		result.forEach(message -> {
@@ -75,11 +73,13 @@ public class ESCache implements IMessageCache {
 			result.add(messageStoreService.getStore().createMessage(params.getMessagePayload()));
 
 			//naive implementation. if saving to message store was successful, also update the cache
-			result.forEach(message -> {
-				if (message instanceof StoredMessage) {
-					esMessageRepository.save(new ESMessage((StoredMessage) message));
-				}
-			});
+			if (!result.isEmpty()) {
+				result.forEach(message -> {
+					if (message instanceof StoredMessage) {
+						esMessageRepository.save(new ESMessage((StoredMessage) message));
+					}
+				});
+			}
 			break;
 		}
 		case UpdateMessage:
