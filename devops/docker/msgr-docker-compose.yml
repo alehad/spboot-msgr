@@ -86,6 +86,20 @@ services:
     depends_on:
       - elasticsearch
 
+  # made redis depend on kafka, just to ensure orderly initialization of images, no actual dependancy
+  redis:
+    image: docker.io/bitnami/redis:7.0
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+    ports:
+      - '6379:6379'
+    volumes:
+      - 'redis_data:/bitnami/redis/data'
+    depends_on:
+     - kafka
+
   msgr:
     container_name: docker-msgr
     image: alehad/msgr
@@ -100,9 +114,12 @@ services:
       - mongodb
       - elasticsearch
       - kibana
+	  - redis
 
 volumes:
   elasticsearch-data:
     driver: local
   mongo-data:
+    driver: local
+  redis_data:
     driver: local

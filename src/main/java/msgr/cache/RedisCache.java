@@ -4,40 +4,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import msgr.broker.MessageRequestParams;
 import msgr.broker.MessageRequestTopic;
-import msgr.elastic.ESMessage;
-import msgr.elastic.ESMessageRepository;
 import msgr.msg.Message;
 import msgr.msg.StoredMessage;
+import msgr.redis.RedisMessage;
+import msgr.redis.RedisMessageRepository;
 import msgr.svc.MessageStoreService;
 
 @Service
-public class ESCache implements IMessageCache {
+public class RedisCache implements IMessageCache {
 
 	@Autowired
 	private MessageStoreService messageStoreService;
 	
     @Autowired
-    private ESMessageRepository esMessageRepository;
-
-    @Override
+    private RedisMessageRepository redisMessageRepository;
+    
+	@Override
 	public boolean isInitialized() {
-		return esMessageRepository.count() > 0L ? true : false;
+		return redisMessageRepository.count() > 0L ? true : false;
 	}
 
 	@Override
 	public void initialize() {
-		// naive implementation -- load all messages from message store into ES
-		// if ES cache is not initialised [eg. it's found to be empty]
 		List<Message> result = messageStoreService.getStore().getMessages();
 		
 		result.forEach(message -> {
 			if (message instanceof StoredMessage) {
-				esMessageRepository.save(new ESMessage((StoredMessage) message));
+				redisMessageRepository.save(new RedisMessage((StoredMessage) message));
 			}
 		});
 	}
@@ -49,22 +46,26 @@ public class ESCache implements IMessageCache {
 		switch (topic) {
 		case GetAllMessages:
     	{
-    		Iterable<ESMessage> messages = esMessageRepository.findAll();
-    		for (ESMessage m : messages) {
-    			result.add(m);
+    		Iterable<RedisMessage> messages = redisMessageRepository.findAll();
+    		for (RedisMessage m : messages) {
+    			result.add(m.asStoredMessage());
     		}
     		break;
     	}
 		case GetAllMessagesBy:
 		{
-			Page<ESMessage> messages = esMessageRepository.findByAuthor(params.getFindByAuthor(), null);
-			messages.forEach(m -> result.add(m));
+			List<RedisMessage> messages = redisMessageRepository.findByAuthor(params.getFindByAuthor());
+			if (!messages.isEmpty()) {
+				messages.forEach(m -> result.add(m.asStoredMessage()));
+			}
 			break;
 		}
 		case GetOneMessage:
 		{
-			Page<ESMessage> messages = esMessageRepository.findByMessageId(params.getFindById(), null);
-			messages.forEach(m -> result.add(m));
+			List<RedisMessage> messages = redisMessageRepository.findByMessageId(params.getFindById());
+			if (!messages.isEmpty()) {
+				messages.forEach(m -> result.add(m.asStoredMessage()));
+			}
 			break;
 		}
 		case AddOneMessage:
@@ -76,7 +77,7 @@ public class ESCache implements IMessageCache {
 			if (!result.isEmpty()) {
 				result.forEach(message -> {
 					if (message instanceof StoredMessage) {
-						esMessageRepository.save(new ESMessage((StoredMessage) message));
+						redisMessageRepository.save(new RedisMessage((StoredMessage) message));
 					}
 				});
 			}
@@ -89,11 +90,11 @@ public class ESCache implements IMessageCache {
 
 			//if saving to message store was successful, also update the cache -- refactor to use kafka
 			if (!result.isEmpty()) {
-				Page<ESMessage> messages = esMessageRepository.findByMessageId(params.getFindById(), null);
+				List<RedisMessage> messages = redisMessageRepository.findByMessageId(params.getFindById());
 				messages.forEach(m -> {
     				m.setAuthor(params.getMessagePayload().getAuthor());
     				m.setMessage(params.getMessagePayload().getMessage());
-    				esMessageRepository.save(m);
+    				redisMessageRepository.save(m);
 				});
 			}
 			break;
@@ -103,34 +104,36 @@ public class ESCache implements IMessageCache {
 			//naive implementation -- just update first message found by this author
 			result.add(messageStoreService.getStore().updateMessageBy(params.getFindByAuthor(), params.getMessagePayload()));
 
-			result.forEach(message -> {
-				if (message instanceof StoredMessage) {
-					//this ensures we will update the same message (with same id) in the cache
-					Page<ESMessage> esMessages = esMessageRepository.findByMessageId(((StoredMessage)message).getMessageId(), null);
-					for (ESMessage m : esMessages) {
-	    				m.setMessage(message.getMessage());
-	    				esMessageRepository.save(m);
-		    		}
-				}
-			});
+			if (!result.isEmpty()) {
+				result.forEach(message -> {
+					if (message instanceof StoredMessage) {
+						//this ensures we will update the same message (with same id) in the cache
+						List<RedisMessage> esMessages = redisMessageRepository.findByMessageId(((StoredMessage)message).getMessageId());
+						for (RedisMessage m : esMessages) {
+		    				m.setMessage(message.getMessage());
+		    				redisMessageRepository.save(m);
+			    		}
+					}
+				});
+			}
 			break;
 		}
 		case DeleteMessage:
 		{
 			messageStoreService.getStore().deleteMessage(params.getFindById());
-			esMessageRepository.deleteAll(esMessageRepository.findByMessageId(params.getFindById(), null));
+			redisMessageRepository.deleteAll(redisMessageRepository.findByMessageId(params.getFindById()));
     		break;
 		}
 		case DeleteMessagesBy:
 		{
 			messageStoreService.getStore().deleteMessagesBy(params.getFindByAuthor());
-			esMessageRepository.deleteAll(esMessageRepository.findByAuthor(params.getFindByAuthor(), null));
+			redisMessageRepository.deleteAll(redisMessageRepository.findByAuthor(params.getFindByAuthor()));
 			break;
 		}
 		case DeleteAllMessages:
 		{
 			messageStoreService.getStore().deleteAll();
-			esMessageRepository.deleteAll();
+			redisMessageRepository.deleteAll();
 			break;
 		}
 		default:
