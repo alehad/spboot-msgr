@@ -1,32 +1,17 @@
-version: '3.5'
-
-networks: 
-  alehad_net:
-    name: alehad_net
-
+version: '3'
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper
-    container_name: zookeeper
-    networks: 
-      - alehad_net
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-
-  kafka:
-    image: confluentinc/cp-kafka
-    container_name: kafka
-    networks: 
-      - alehad_net
+  msgr:
+    container_name: docker-msgr
+    image: alehad/msgr:2.0
+    ports:
+     - "80:8088"
+     - "8080:8088"
     depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      redis:
+          condition: service_healthy
+      kibana:
+          condition: service_healthy
 
-  # I made mongo depend on kafka/zookeper just so those get initialized fully before initializing mongo
   mongodb:
     container_name: docker-mongo
     image: mongo
@@ -34,25 +19,45 @@ services:
      - "27017:27017"
     volumes:
      - mongo-data:/data/db
-    networks: 
-      - alehad_net
-    depends_on:
-      - zookeeper
-      - kafka
 
   # mongo express is not required for running msgr but useful to inspect data stored in mongo
+  # alternative to specifying mongo-express services as part of compose.yaml is to start it via
+  # docker cli, but note that in that case you need to *link it* to network in which mongo and 
+  # msgr app are running. see my gitdocs/docker notes for more details on this
   mongo-express:
     container_name: docker-mongo-express
     image: mongo-express
     environment:
       - ME_CONFIG_MONGODB_SERVER=mongodb
       - ME_CONFIG_MONGODB_PORT=27017
-    ports:
-     - "8082:8081"
-    networks: 
-      - alehad_net
     depends_on:
      - mongodb
+    ports:
+     - "8082:8081"
+
+  zookeeper:
+    container_name: docker-zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+  
+  kafka:
+    container_name: docker-kafka
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,CONNECTIONS_FROM_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONNECTIONS_FROM_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   # Elasticsearch Docker Images: https://www.docker.elastic.co/
   elasticsearch:
@@ -85,6 +90,15 @@ services:
       - 5601:5601
     depends_on:
       - elasticsearch
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
 
   # made redis depend on kafka, just to ensure orderly initialization of images, no actual dependancy
   redis:
@@ -99,22 +113,11 @@ services:
       - 'redis_data:/bitnami/redis/data'
     depends_on:
      - kafka
-
-  msgr:
-    container_name: docker-msgr
-    image: alehad/msgr
-    ports:
-     - "80:8088"
-     - "8080:8088"
-    networks: 
-      - alehad_net
-    depends_on:
-      - zookeeper
-      - kafka
-      - mongodb
-      - elasticsearch
-      - kibana
-	  - redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 2s
+      retries: 10
 
 volumes:
   elasticsearch-data:
