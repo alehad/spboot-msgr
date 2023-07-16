@@ -39,7 +39,9 @@ public class MongoDbStore implements IMessageStore {
 	@Value("${spring.data.mongodb.port:27017}")
 	private String _mongodbPort;
 
-	private final String _mongodbName = "MessengerDBv2";
+	@Value("${spring.data.mongodb.name:MessengerDB}")
+	private String _mongodbName;
+	
 	private final String _mongodbCollectionName = "messages";
 	
 	private final String _msgId = "msgId";
