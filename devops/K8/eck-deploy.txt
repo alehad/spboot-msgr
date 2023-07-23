@@ -1,0 +1,39 @@
+# ECK needs to be deployed to K8 cluster before the ES/Kibana can be installed
+#
+# See following for details:
+# 	https://www.elastic.co/guide/en/cloud-on-k8s/master/k8s-deploy-eck.html
+#
+#	https://medium.com/rahasak/deploy-elasticsearch-and-kibana-cluster-on-kubernetes-with-elasticsearch-operator-79f205170f40
+#
+
+
+# install custom resource definitions
+# this will create custom crds for elasticsearch
+kubectl create -f https://download.elastic.co/downloads/eck/2.8.0/crds.yaml
+
+❯❯ kubectl get crd
+NAME                                                 CREATED AT
+agents.agent.k8s.elastic.co                          2022-07-30T02:16:25Z
+apmservers.apm.k8s.elastic.co                        2022-07-30T02:16:25Z
+beats.beat.k8s.elastic.co                            2022-07-30T02:16:25Z
+elasticmapsservers.maps.k8s.elastic.co               2022-07-30T02:16:25Z
+elasticsearches.elasticsearch.k8s.elastic.co         2022-07-30T02:16:25Z
+enterprisesearches.enterprisesearch.k8s.elastic.co   2022-07-30T02:16:25Z
+kibanas.kibana.k8s.elastic.co                        2022-07-30T02:16:26Z
+
+
+---
+
+# install the operator with its RBAC rules
+# this will create namespace called elastic-system and install elastic operator on it
+kubectl apply -f https://download.elastic.co/downloads/eck/2.8.0/operator.yaml
+
+❯❯ kubectl get all -n elastic-system
+NAME                     READY   STATUS    RESTARTS   AGE
+pod/elastic-operator-0   1/1     Running   0          25h
+
+NAME                             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+service/elastic-webhook-server   ClusterIP   10.100.135.188   <none>        443/TCP   25h
+
+NAME                                READY   AGE
+statefulset.apps/elastic-operator   1/1     25h
