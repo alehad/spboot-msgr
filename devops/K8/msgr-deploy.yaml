@@ -14,10 +14,10 @@ spec:
     spec:
       containers:
       - name: docker-msgr
-        image: alehad/msgr
+        image: alehad/msgr:2.2
         resources:
           limits:
-            memory: "128Mi"
+            memory: "512Mi"
             cpu: "100m"
         ports:
         - containerPort: 8088

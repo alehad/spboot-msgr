@@ -34,7 +34,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka-broker
+  name: kafka-broker #this service name cannot be just kafka, because k8 will fail to start stating 'port is deprecated. Please use KAFKA_ADVERTISED_LISTENERS instead.'
 spec:
   selector:
     app: kafka-broker
