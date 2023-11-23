@@ -2,7 +2,7 @@ version: '3'
 services:
   msgr:
     container_name: docker-msgr
-    image: alehad/msgr
+    image: alehad/msgr:2.2
     ports:
      - "80:8088"
      - "8080:8088"
@@ -44,7 +44,7 @@ services:
     ports:
       - 22181:2181
   
-  kafka:
+  kafka-broker:
     container_name: docker-kafka
     image: confluentinc/cp-kafka:latest
     depends_on:
@@ -54,13 +54,13 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,CONNECTIONS_FROM_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-broker:9092,CONNECTIONS_FROM_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONNECTIONS_FROM_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   # Elasticsearch Docker Images: https://www.docker.elastic.co/
-  elasticsearch:
+  elasticsearch-es-http:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.6.2
     container_name: docker-elasticsearch
     environment:
@@ -85,11 +85,11 @@ services:
     container_name: docker-kibana
     image: docker.elastic.co/kibana/kibana:7.6.2
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_HOSTS=http://elasticsearch-es-http:9200
     ports:
       - 5601:5601
     depends_on:
-      - elasticsearch
+      - elasticsearch-es-http
     healthcheck:
       test:
         [
@@ -112,7 +112,7 @@ services:
     volumes:
       - 'redis_data:/bitnami/redis/data'
     depends_on:
-     - kafka
+     - kafka-broker
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 1s

@@ -32,6 +32,49 @@ jenkins > contains the shell script for running jenkins locally
 k8> same as devops folder but containg the k8 deployment files
 
 
+Running/developing the app:
+
+When developing the app, the easiest way to run all supporting services is via docker compose:
+
+  > docker compose -f msgr-pipeline-services-compose.yml up
+
+once this is running, run the msgr project via Debug Configurations --> create Messenger-dev config [which in Arguments tab has --spring.profiles.active=dev ]
+
+this will ensure that app uses /resources/application-dev.properties file, which overrides all properties needed to run/debug the app locally
+
+Postman is a typical way to test the application, the following end-points are used depending on the mode of running:
+
+  * localhost:8088 if debugging via IDE [for example, in Postman GET http://localhost:8080/messages]
+
+  * localhost:8088 if running in K8s/minikube
+  
+  * localhost:8080 if running fully in docker [via docker compose -f msgr-docker-compose.yml up]
+
+
+Docker:
+
+Docker deployment supports both Redis and ES cache configurations, as well as persistence for Mongo, Redis and ES.
+
+Service names for Kafka and ES are driven by the idiosyncrasies of K8s kafka and ES deployments, which are present at least in minikube.
+
+  * Naming kafka service simply kafka will cause 'port is deprecated. Please use KAFKA_ADVERTISED_LISTENERS instead.' fail message, due to K8s internal env variable settings which use service name.
+
+  * Default ES http service in K8 minikube is elasticsearch-es-http, so the same service name for ES was also used for docker compose service definition. 
+
+
+K8s:
+
+K8 deployment supports ES cache and MongoDB implementation, and provides ES persistance via ECK setup.
+At present, there is no MongoDB persistence and Redis cache implementation.
+
+
+Mongo Express:
+
+If admin authentication is needed on the first run of the app, see: https://hub.docker.com/_/mongo-express
+
+under: 'The following are only needed if ME_CONFIG_MONGODB_ENABLE_ADMIN is "false"'.
+
+
 Azure:
 
 App can be deployed to Azure via 'multi-container docker compose' feature in AppService setup. 
